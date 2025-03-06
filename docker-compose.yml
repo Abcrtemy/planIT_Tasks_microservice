@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  task-app:
+    build:
+      context: .
+    container_name: task-app
+    ports:
+      - "8000:8000"  
+    volumes:
+      - .:/app       
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - DEBUG=True
+    networks:
+      - backendNetwork
+
+networks:
+  backendNetwork:
+    external: true
