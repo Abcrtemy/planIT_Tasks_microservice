@@ -5,18 +5,25 @@ services:
     build:
       context: .
     container_name: task-app
+    labels:
+      - "traefik.http.routers.tasks.rule=Host(`localhost`) && PathPrefix(`/taskBoard`)"
+      - "traefik.http.services.tasks.loadbalancer.server.port=8000"
     ports:
       - "8000:8000"  
     volumes:
-      - .:/app       
+      - .:/app
+      - ~/Desktop/input:/app/input 
+      - ~/Desktop/output:/app/output       
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
     environment:
       - DEBUG=True
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
     networks:
       - backendNetwork
-
 networks:
   backendNetwork:
     external: true

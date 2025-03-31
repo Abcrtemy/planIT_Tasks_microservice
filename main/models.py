@@ -28,3 +28,5 @@ class Task (models.Model):
     priority = models.CharField(max_length=20, choices=PriorityChoices.choices, default=PriorityChoices.low, verbose_name='Приоритет')
 
     user_id = models.IntegerField(null=True, blank=True, verbose_name='Пользователь')
+
+    file = models.CharField(max_length=200, null=True, blank=True)
