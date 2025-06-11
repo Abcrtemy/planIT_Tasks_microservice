@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task, Project, Team
+from .models import Task, Project, Sprint, Company
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -10,9 +10,22 @@ class TaskSerializer(serializers.ModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
-        exclude = ['created_at']
+        fields = '__all__'
+    def update(self, instance, validated_data):
+        print("update")
+        for attr, value in validated_data.items():
+            if attr == 'company' and isinstance(value, int):
+                value = Company.objects.get(id=value)
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
-class TeamSerializer(serializers.ModelSerializer):
+class SprintSrializer(serializers.ModelSerializer):
     class Meta:
-        model = Team
-        exclude = ['created_at']
+        model = Sprint
+        exclude = ['end_time']
+
+# class TeamSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Team
+#         fields = '__all__'

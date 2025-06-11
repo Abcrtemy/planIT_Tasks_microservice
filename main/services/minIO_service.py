@@ -1,6 +1,7 @@
 import boto3
 from django.conf import settings
 from botocore.exceptions import ClientError
+import os
 
 class FileHandler():
     def __init__(self, file_url):

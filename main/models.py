@@ -33,7 +33,16 @@ class Task (models.Model):
     file = models.CharField(max_length=200, null=True, blank=True)
 
 
-class Project(models.Model):
+# class Project(models.Model):
+#     name = models.CharField(max_length=200, unique=True)
+#     description = models.CharField(max_length=2000, blank=True, null=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     creator_id = models.IntegerField()
+
+#     def __str__(self) -> str:
+#         return self.name
+    
+class Company(models.Model):
     name = models.CharField(max_length=200, unique=True)
     description = models.CharField(max_length=2000, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -41,28 +50,54 @@ class Project(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-class Sprint(models.Model):
-    is_active = models.BooleanField(default=True)
-    start_time = models.DateTimeField(auto_now_add=True)
-    number = models.IntegerField()
-    duration = models.IntegerField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="sprints")
     
-    @property
-    def end_time(self):
-        return self.start_time + timedelta(days=self.duration)
-    
-    def __str__(self) -> str:
-        return self.number
-
-class Team(models.Model):
+class Project(models.Model):
     name = models.CharField(max_length=200, unique=True)
     amount_of_persons = models.IntegerField(default=0)
-    project = models.ManyToManyField(Project, blank = True, related_name='team')
+    description = models.CharField(max_length=2000, blank=True, null=True)
+    # project = models.ManyToManyField(Project, blank = True, related_name='team')
     team_leader = models.IntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     creator_id = models.IntegerField()
 
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="company")
+
     def __str__(self) -> str:
         return self.name
+    
+class Project_user(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='members')  
+    user_id = models.IntegerField()     
+    entered_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = ('project', 'user_id')
+    # def __str__(self) -> str:
+    #     return self.user_id
+
+class Company_user(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='members')  
+    user_id = models.IntegerField()     
+    entered_at = models.DateTimeField(auto_now_add=True)
+    class Meta:
+        unique_together = ('company', 'user_id')
+    # def __str__(self) -> str:
+    #     return self.user_id
+
+class Sprint(models.Model):
+    is_active = models.BooleanField(default=False)
+    start_time = models.DateTimeField(auto_now_add=True)
+    number = models.IntegerField()
+    duration = models.IntegerField(default = 2) #в неделях
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="sprints")
+    @property
+    def end_time(self):
+        return self.start_time + timedelta(weeks=self.duration)
+    
+    def __str__(self) -> str:
+        return self.number
+
+
+
+
+
+

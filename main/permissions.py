@@ -32,8 +32,9 @@ def require_auth_user(view_func):
         user_id = tokenGetUser(request.headers.get('Authorization'))
         if not user_id:
             return Response({"error": "Missing or invalid token"}, status=403)
-        if request.data:
-            request.data["user_id"] = user_id
-
+        if not hasattr(request, "data") or request.data is None:
+            request._full_data = {}  
+        request._full_data["user_id"] = user_id
+        #криво и косо, нужно исправить
         return view_func(self, request, *args, **kwargs)
     return wrapped_view

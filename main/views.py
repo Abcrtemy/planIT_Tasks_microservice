@@ -1,16 +1,14 @@
 from rest_framework.views import APIView
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 import requests
 
-from functools import wraps
-
-from main.models import Task, Project, Team
-from .serializers import TaskSerializer, ProjectSerializer, TeamSerializer
+from main.models import Task
+from .serializers import TaskSerializer
 from .services.minIO_service import FileHandler
 from .services.mongo_service import TaskHistory
 from .services.project_service import ProjectService
-from .services.team_service import TeamService
+# from .services.team_service import TeamService
 from .permissions import require_auth_creator, require_auth_user, tokenGetUser
 
 import json
@@ -79,23 +77,33 @@ class TaskView(APIView):
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
 
-class ProjectView(APIView):
+class ProjectView(viewsets.ViewSet):
+    # @require_auth_creator
+    # def save(self, request):
+    #     try:
+    #         project = ProjectService.save(request.data, request.data.get('creator_id'))
+    #         return Response(project, status=status.HTTP_202_ACCEPTED)
+    #     except Exception as e:
+    #         return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+
     @require_auth_creator
     def post(self, request):
         try:
+            # print("hello")
             project = ProjectService.create(request.data)
-            return Response(ProjectSerializer(project).data, status=status.HTTP_202_ACCEPTED)
+            return Response(project, status=status.HTTP_202_ACCEPTED)
         except Exception as e:
+            print(f"error: {e}")
             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
     
     @require_auth_creator
     def patch(self, request, projectID):
         try:
             project = ProjectService.update(data = request.data, projectID = projectID, creator_id = request.data.get('creator_id'))
-            return Response(ProjectSerializer(project).data, status=status.HTTP_202_ACCEPTED)
+            return Response(project, status=status.HTTP_202_ACCEPTED)
         except Exception as e:
+            print(f"error: {e}")
             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
         
     @require_auth_creator
@@ -105,31 +113,73 @@ class ProjectView(APIView):
             ProjectService.delete(projectID = projectID, creator_id = creator_id)
             return Response("sucsess", status=status.HTTP_202_ACCEPTED)
         except Exception as e:
-            return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
-
-
-class TeamView(APIView):
-    @require_auth_creator
-    def post(self, request):
-        try:
-            team = TeamService.create(request.data)
-            return Response(TeamSerializer(team).data, status=status.HTTP_202_ACCEPTED)
-        except Exception as e:
-            return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
-    
-    @require_auth_creator
-    def patch(self, request, teamID):
-        try:
-            team = TeamService.update(data = request.data, teamID = teamID, creator_id = request.data.get('creator_id'))
-            return Response(TeamSerializer(team).data, status=status.HTTP_202_ACCEPTED)
-        except Exception as e:
+            print(f"error: {e}")
             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
         
-    @require_auth_creator
-    def delete(self, request, teamID):
-        creator_id = tokenGetUser(request.headers.get('Authorization'))
+    @require_auth_user
+    def get(self, request):
         try:
-            TeamService.delete(teamID = teamID, creator_id = creator_id)
+            projects = ProjectService.get_all_by_user_id(request.data.get('user_id'))
+            # print(ProjectService.get_all_by_company_id(1))
+            print(projects)
+            return Response(projects, status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            print(f"error: {e}")
+            return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+    @require_auth_user
+    def add_user(self, request, project_id):
+        try:
+            ProjectService.add_user(request.data.get('user_id'), project_id)
             return Response("sucsess", status=status.HTTP_202_ACCEPTED)
         except Exception as e:
             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+    @require_auth_user
+    def delete_user(self, request, project_id):
+        try:
+            ProjectService.delete_user(request.data.get('user_id'), project_id)
+            return Response("sucsess", status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+
+
+# class TeamView(viewsets.ViewSet):
+#     @require_auth_creator
+#     def post(self, request):
+#         try:
+#             team = TeamService.create(request.data)
+#             return Response(team, status=status.HTTP_202_ACCEPTED)
+#         except Exception as e:
+#             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+    
+#     @require_auth_creator
+#     def patch(self, request, teamID):
+#         try:
+#             team = TeamService.update(data = request.data, teamID = teamID, creator_id = request.data.get('creator_id'))
+#             return Response(team, status=status.HTTP_202_ACCEPTED)
+#         except Exception as e:
+#             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+        
+#     @require_auth_creator
+#     def delete(self, request, teamID):
+#         creator_id = tokenGetUser(request.headers.get('Authorization'))
+#         try:
+#             TeamService.delete(teamID = teamID, creator_id = creator_id)
+#             return Response("sucsess", status=status.HTTP_202_ACCEPTED)
+#         except Exception as e:
+#             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+        
+#     @require_auth_user
+#     def get(self, request):
+#         try:
+#             teams = TeamService.get_all_by_user_id(request.data.get('user_id'))
+#             return Response(teams, status=status.HTTP_202_ACCEPTED)
+#         except Exception as e:
+#             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
+#     @require_auth_user
+#     def add_user(self, request, teamID):
+#         try:
+#             # print("hello")
+#             TeamService.add_user(request.data.get('user_id'), teamID)
+#             return Response("sucsess", status=status.HTTP_202_ACCEPTED)
+#         except Exception as e:
+#             return Response(f"error: {e}", status=status.HTTP_400_BAD_REQUEST)
